@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How-2-Buy Web App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .menu-title { text-align: center; margin-bottom: 20px; font-size: 24px; color: #333; }
+    .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+    .nav-buttons button { padding: 10px 20px; background: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .nav-buttons button:disabled { background: #ccc; cursor: not-allowed; }
+    .nav-buttons button:hover:not(:disabled) { background: #0056b3; }
+    .stage-indicator { display: flex; justify-content: center; margin: 20px 0; }
+    .stage-dot { width: 12px; height: 12px; border-radius: 50%; margin: 0 5px; background: #ccc; }
+    .stage-dot.active { background: #007BFF; }
+    .menu-content { min-height: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="menu-title" id="menu-title">Client Profile</div>
+    <div class="stage-indicator" id="stage-indicator">
+      <div class="stage-dot active"></div>
+      <div class="stage-dot"></div>
+      <div class="stage-dot"></div>
+      <div class="stage-dot"></div>
+      <div class="stage-dot"></div>
+    </div>
+    <div class="menu-content" id="menu-content">
+      <!-- Menu content will be loaded here -->
+      <p>Welcome to Client Profile. Enter your details and click Next to proceed.</p>
+    </div>
+    <div class="nav-buttons">
+      <button id="back-btn" disabled>Back</button>
+      <button id="next-btn">Next</button>
+    </div>
+  </div>
+
+  <script>
+    const menus = [
+      { title: "Client Profile", content: "<p>Welcome to Client Profile. Enter your details and click Next to proceed.</p>" },
+      { title: "Sell Existing", content: "<p>Enter details about your existing property sale.</p>" },
+      { title: "Quantum of Purchase", content: "<p>Enter details about your intended purchase.</p>" },
+      { title: "Pledge/Unpledge", content: "<p>Enter pledge/unpledge details.</p>" },
+      { title: "Summary", content: "<p>Review your summary here.</p>" }
+    ];
+
+    let currentMenuIndex = 0;
+    const menuTitle = document.getElementById("menu-title");
+    const menuContent = document.getElementById("menu-content");
+    const stageIndicator = document.getElementById("stage-indicator");
+    const backBtn = document.getElementById("back-btn");
+    const nextBtn = document.getElementById("next-btn");
+
+    function updateMenu() {
+      menuTitle.textContent = menus[currentMenuIndex].title;
+      menuContent.innerHTML = menus[currentMenuIndex].content;
+      // Update stage dots
+      const dots = stageIndicator.querySelectorAll(".stage-dot");
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("active", i === currentMenuIndex);
+      });
+      // Update buttons
+      backBtn.disabled = currentMenuIndex === 0;
+      nextBtn.disabled = currentMenuIndex === menus.length - 1;
+    }
+
+    backBtn.addEventListener("click", () => {
+      if (currentMenuIndex > 0) {
+        currentMenuIndex--;
+        updateMenu();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentMenuIndex < menus.length - 1) {
+        currentMenuIndex++;
+        updateMenu();
+      }
+    });
+
+    // Initialize
+    updateMenu();
+  </script>
+</body>
+</html>
