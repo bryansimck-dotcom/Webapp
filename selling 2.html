@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>How-2-Buy Web App</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f4; }
+    .container { max-width: 800px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .menu-title { text-align: center; margin-bottom: 20px; font-size: 24px; color: #333; }
+    .nav-buttons { display: flex; justify-content: space-between; margin-top: 20px; }
+    .nav-buttons button { padding: 10px 20px; background: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    .nav-buttons button:disabled { background: #ccc; cursor: not-allowed; }
+    .nav-buttons button:hover:not(:disabled) { background: #0056b3; }
+    .stage-indicator { display: flex; justify-content: center; margin: 20px 0; }
+    .stage-dot { width: 12px; height: 12px; border-radius: 50%; margin: 0 5px; background: #ccc; }
+    .stage-dot.active { background: #007BFF; }
+    .menu-content { min-height: 300px; padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #f9f9f9; }
+    .client-block {
+      border: 1px solid #ccc; padding: 18px; border-radius: 6px; margin-bottom: 16px; background: #fafbff;
+    }
+    .client-header { font-weight: bold; margin-bottom: 8px;}
+    label { display: block; margin-top: 7px;}
+    input, select { width: 80%; padding: 6px; font-size: 1rem;}
+    button { padding: 7px 14px; margin-top: 10px; color: #fff; background: #007BFF; border: none; border-radius: 5px;}
+    button.remove { background: #dc3545; margin-left: 10px;}
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #f0f0f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="menu-title" id="menu-title">Client Profile</div>
+    <div class="stage-indicator" id="stage-indicator">
+      <div class="stage-dot active"></div>
+      <div class="stage-dot"></div>
+      <div class="stage-dot"></div>
+      <div class="stage-dot"></div>
+      <div class="stage-dot"></div>
+    </div>
+    <div class="menu-content" id="menu-content">
+      <!-- Content will be loaded here -->
+    </div>
+    <div class="nav-buttons">
+      <button id="back-btn" disabled>Back</button>
+      <button id="next-btn">Next</button>
+    </div>
+  </div>
+
+  <script>
+    // Global data
+    window.clientProfiles = [];
+    window.sellData = [];
+
+    const citizenshipOptions = ["Singaporean", "PR", "Foreigner"];
+
+    // Client Profile Functions
+    function renderClientForm() {
+      const container = document.getElementById('menu-content');
+      container.innerHTML = '';
+      window.clientProfiles.forEach((client, idx) => {
+        const block = document.createElement('div');
+        block.className = 'client-block';
+        block.innerHTML = `
+          <div class="client-header">Client ${idx+1}</div>
+          <label>Citizenship:
+            <select onchange="updateClient(${idx}, 'citizenship', this.value)">
+              ${citizenshipOptions.map(opt =>
+                `<option value="${opt}" ${client.citizenship === opt ? 'selected' : ''}>${opt}</option>`
+              ).join('')}
+            </select>
+          </label>
+          <label>Age:
+            <input type="number" min="18" max="100" value="${client.age || ''}" onchange="updateClient(${idx}, 'age', this.value)" />
+          </label>
+          <label>Existing Property (Valuation):
+            <input type="number" min="0" value="${client.valuation || ''}" onchange="updateClient(${idx}, 'valuation', this.value)" />
+          </label>
+          <label>Outstanding Loan:
+            <input type="number" min="0" value="${client.outstandingLoan || ''}" onchange="updateClient(${idx}, 'outstandingLoan', this.value)" />
+          </label>
+          <label>CPF Utilised + Accrued Int:
+            <input type="number" min="0" value="${client.cpfUtilized || ''}" onchange="updateClient(${idx}, 'cpfUtilized', this.value)" />
+          </label>
+          <label>CPF-OA Balance:
+            <input type="number" min="0" value="${client.cpfOA || ''}" onchange="updateClient(${idx}, 'cpfOA', this.value)" />
+          </label>
+          <label>Estimated Household Income:
+            <input type="number" min="0" value="${client.income || ''}" onchange="updateClient(${idx}, 'income', this.value)" />
+          </label>
+          <label>Cash Set Aside for Next Property:
+            <input type="number" min="0" value="${client.cash || ''}" onchange="updateClient(${idx}, 'cash', this.value)" />
+          </label>
+        ${window.clientProfiles.length > 1 ?
+          `<button class="remove" onclick="removeClient(${idx})">Remove</button>` : ''}
+        `;
+        container.appendChild(block);
+      });
+      container.innerHTML += `<button onclick="addClient()">Add Client</button>`;
+    }
+
+    function updateClient(idx, field, value) {
+      window.clientProfiles[idx][field] = field === "age" ? parseInt(value) : (
+        ["valuation", "outstandingLoan", "cpfUtilized", "cpfOA", "income", "cash"].includes(field)
+          ? parseFloat(value)
+          : value
+      );
+    }
+
+    function addClient() {
+      window.clientProfiles.push({
+        citizenship: citizenshipOptions[0],
+        age: '',
+        valuation: '',
+        outstandingLoan: '',
+        cpfUtilized: '',
+        cpfOA: '',
+        income: '',
+        cash: ''
+      });
+      renderClientForm();
+    }
+
+    function removeClient(idx) {
+      window.clientProfiles.splice(idx, 1);
+      renderClientForm();
+    }
+
+    // Sell Existing Functions
+    function renderSellExisting() {
+      const container = document.getElementById("menu-content");
+      container.innerHTML = `
+        <table id="sell-table">
+          <thead>
+            <tr>
+              <th>Description</th>
+              ${window.clientProfiles.map((_, i) => `<th>Owner ${i+1}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Selling Price</td>
+              ${window.clientProfiles.map((_, i) => `
+                <td><input type="number" id="sellingPrice${i}" min="0" onchange="updateSellData(${i}, 'sellingPrice', this.value)" /></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Deductions from Sale Proceeds</td>
+              ${window.clientProfiles.map(() => `<td></td>`).join('')}
+            </tr>
+            <tr>
+              <td>Outstanding Loan</td>
+              ${window.clientProfiles.map((client, i) => `
+                <td>${client.outstandingLoan || 0}</td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td>CPF Utilised + Accrued Int</td>
+              ${window.clientProfiles.map((client, i) => `
+                <td>${client.cpfUtilized || 0}</td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td>Sales Commission <button onclick="openCalculator('commission')">🧮</button></td>
+              ${window.clientProfiles.map((_, i) => `
+                <td><input type="number" id="commission${i}" min="0" onchange="updateSellData(${i}, 'commission', this.value)" /></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td>Legal Fees</td>
+              ${window.clientProfiles.map((_, i) => `
+                <td><input type="number" id="legalFees${i}" min="0" onchange="updateSellData(${i}, 'legalFees', this.value)" /></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td>SSD (if applicable) <button onclick="openSSDCalculator()">🧮</button></td>
+              ${window.clientProfiles.map((_, i) => `
+                <td><input type="number" id="ssd${i}" min="0" onchange="updateSellData(${i}, 'ssd', this.value)" /></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td>Resale Levy (if applicable)</td>
+              ${window.clientProfiles.map((_, i) => `
+                <td><input type="number" id="resaleLevy${i}" min="0" onchange="updateSellData(${i}, 'resaleLevy', this.value)" /></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">CASH Proceeds</td>
+              ${window.clientProfiles.map((_, i) => `
+                <td id="cashProceeds${i}"></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">After Sales Completion</td>
+              ${window.clientProfiles.map(() => `<td></td>`).join('')}
+            </tr>
+            <tr>
+              <td>Cash on-hand</td>
+              ${window.clientProfiles.map((_, i) => `
+                <td id="cashOnHand${i}"></td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td>CPF on-hand</td>
+              ${window.clientProfiles.map((client, i) => `
+                <td id="cpfOnHand${i}">${client.cpfOA || 0}</td>
+              `).join('')}
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Total Available for Next Purchase</td>
+              ${window.clientProfiles.map((_, i) => `
+                <td id="totalAvailable${i}"></td>
+              `).join('')}
+            </tr>
+          </tbody>
+        </table>
+      `;
+
+      window.sellData = window.clientProfiles.map(() => ({
+        sellingPrice: 0,
+        commission: 0,
+        legalFees: 0,
+        ssd: 0,
+        resaleLevy: 0
+      }));
+      calculateCashProceeds();
+    }
+
+    function updateSellData(clientIndex, field, value) {
+      window.sellData[clientIndex][field] = parseFloat(value) || 0;
+      calculateCashProceeds();
+    }
+
+    function calculateCashProceeds() {
+      window.clientProfiles.forEach((client, i) => {
+        const sellingPrice = window.sellData[i].sellingPrice || 0;
+        const outstandingLoan = client.outstandingLoan || 0;
+        const cpfUtilized = client.cpfUtilized || 0;
+        const commission = window.sellData[i].commission || 0;
+        const legalFees = window.sellData[i].legalFees || 0;
+        const ssd = window.sellData[i].ssd || 0;
+        const resaleLevy = window.sellData[i].resaleLevy || 0;
+
+        const cashProceeds = sellingPrice - outstandingLoan - cpfUtilized - commission - legalFees - ssd - resaleLevy;
+        const cashOnHand = cashProceeds;
+        //const cpfOnHand = client.cpfOA || 0;
+	 const cpfOnHand = client.cpfOA + cpfUtilized;
+        const totalAvailable = cashOnHand + cpfOnHand;
+
+        document.getElementById(`cashProceeds${i}`).textContent = cashProceeds.toFixed(2);
+        document.getElementById(`cashOnHand${i}`).textContent = cashOnHand.toFixed(2);
+        document.getElementById(`cpfOnHand${i}`).textContent = cpfOnHand.toFixed(2);
+        document.getElementById(`totalAvailable${i}`).textContent = totalAvailable.toFixed(2);
+      });
+    }
+
+    function openCalculator(type) {
+      alert(`Mini ${type} calculator will open here.`);
+    }
+
+    function openSSDCalculator() {
+      alert("SSD calculator will open here with IRAS formula.");
+    }
+
+    // Navigation Logic
+    const menus = [
+      { title: "Client Profile", content: renderClientForm },
+      { title: "Sell Existing", content: renderSellExisting },
+      { title: "Quantum of Purchase", content: () => { document.getElementById("menu-content").innerHTML = "<p>Quantum of Purchase content here.</p>"; } },
+      { title: "Pledge/Unpledge", content: () => { document.getElementById("menu-content").innerHTML = "<p>Pledge/Unpledge content here.</p>"; } },
+      { title: "Summary", content: () => { document.getElementById("menu-content").innerHTML = "<p>Summary content here.</p>"; } }
+    ];
+
+    let currentMenuIndex = 0;
+    const menuTitle = document.getElementById("menu-title");
+    const stageIndicator = document.getElementById("stage-indicator");
+    const backBtn = document.getElementById("back-btn");
+    const nextBtn = document.getElementById("next-btn");
+
+    function updateMenu() {
+      menuTitle.textContent = menus[currentMenuIndex].title;
+      menus[currentMenuIndex].content();
+      const dots = stageIndicator.querySelectorAll(".stage-dot");
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("active", i === currentMenuIndex);
+      });
+      backBtn.disabled = currentMenuIndex === 0;
+      nextBtn.disabled = currentMenuIndex === menus.length - 1;
+    }
+
+    backBtn.addEventListener("click", () => {
+      if (currentMenuIndex > 0) {
+        currentMenuIndex--;
+        updateMenu();
+      }
+    });
+
+    nextBtn.addEventListener("click", () => {
+      if (currentMenuIndex < menus.length - 1) {
+        currentMenuIndex++;
+        updateMenu();
+      }
+    });
+
+    // Initialize
+    addClient();
+    updateMenu();
+  </script>
+</body>
+</html>
