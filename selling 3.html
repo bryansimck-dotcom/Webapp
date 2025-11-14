@@ -49,11 +49,11 @@
   </div>
 
 
-<!-- Add this to your HTML -->
+<!-- Add this to your HTML for com pop-up-->
 <div id="commission-popup" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.2); z-index: 1000;">
   <h3>Sales Commission Calculator</h3>
-  <label>Selling Price (SGD):</label>
-  <input type="number" id="commission-selling-price" min="0" style="width: 100%; margin-bottom: 10px;" />
+  //<label>Selling Price (SGD):</label>
+  //<input type="number" id="commission-selling-price" min="0" style="width: 100%; margin-bottom: 10px;" />
   <label>Commission (%):</label>
   <input type="number" id="commission-percentage" min="0" max="100" style="width: 100%; margin-bottom: 10px;" />
   <label>OR Commission (SGD):</label>
@@ -281,7 +281,8 @@ function openCalculator(type) {
 }
 
 function calculateCommission() {
-  const sellingPrice = parseFloat(document.getElementById('commission-selling-price').value) || 0;
+  // Get selling price from the table (for the first owner; adjust for multiple owners as needed)
+  const sellingPrice = parseFloat(document.getElementById('sellingPrice0').value) || 0;
   const percentage = parseFloat(document.getElementById('commission-percentage').value) || 0;
   const amount = parseFloat(document.getElementById('commission-amount').value) || 0;
   let result = 0;
@@ -293,11 +294,10 @@ function calculateCommission() {
   }
 
   document.getElementById('commission-result').textContent = `Commission: SGD ${result.toFixed(2)}`;
-  // Optionally, set the result to the input field in the Sell Existing table
-  // For example, set to the first owner's commission input:
+  // Set the result to the commission input in the table
   document.getElementById('commission0').value = result.toFixed(2);
-  // You can loop through all owners if needed
 }
+
 
 function closeCommissionPopup() {
   document.getElementById('commission-popup').style.display = 'none';
